@@ -8,17 +8,14 @@ verify_ssl = true
 [packages]
 torch = "*"
 pandas = "*"
-swifter = "*"
 tqdm = "*"
 astor = "*"
 spacy = "*"
-allennlp = "*"
 pytorch-nlp = "*"
 fairseq = "*"
 pytorch-ignite = "*"
 gensim = "*"
 nltk = "*"
-redbaron = "*"
 subword-nmt = "*"
 
 [requires]
