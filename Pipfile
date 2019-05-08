@@ -17,6 +17,7 @@ pytorch-ignite = "*"
 gensim = "*"
 nltk = "*"
 subword-nmt = "*"
+pytorch-pretrained-bert = "*"
 
 [requires]
 python_version = "3.7"
