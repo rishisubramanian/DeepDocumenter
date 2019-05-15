@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import ast
 import astor
@@ -10,11 +12,11 @@ from tokenize import tokenize
 from io import BytesIO
 
 def walkdir_py(rootdir):
-    for dirname, dirlist, filelist in os.walk(rootdir):
+    for dirname, _, filelist in os.walk(rootdir):
         for f in filelist:
             _, ext = os.path.splitext(f)
             if ext == ".py":
-                yield os.path.abspath(os.path.join(dirname, f))
+                yield os.path.abspath(os.path.join(dirname, f)), dirname
 
 def get_file_contents(filename, rootdir):
     with open(filename, "r") as src_file:
@@ -28,50 +30,65 @@ def get_file_contents(filename, rootdir):
 def extract_docstring(ast_node):
     ast_node = copy.deepcopy(ast_node)
     docstring = ast.get_docstring(ast_node, clean=True)
-    if not docstring is None:
-        ast_node.body = ast_node.body[1:]
-    fn_text = astor.to_source(ast_node)
+    if docstring is None:
+        return None
+    ast_node.body = ast_node.body[1:]
+    try:
+        fn_text = astor.to_source(ast_node)
+    except OverflowError:
+        return None
     # buffered_text = BytesIO(bytes(fn_text, "utf-8"))
     # tokens = list(tokenize(buffered_text.readline))
-    return (
+    return [
         # ast_node, 
-        # tokens, 
         fn_text, 
         docstring
-    )
+        # tokens
+    ]
 
 def get_fns_from_file(filename, rootdir):
-    src_tree = astor.parse_file(filename)
+    try:
+        src_tree = astor.parse_file(filename)
+    except (SyntaxError, UnicodeDecodeError, FileNotFoundError, MemoryError, ValueError):
+        return []
+
     rel_path = os.path.relpath(filename, start=rootdir)
 
     output_list = []
 
     class GetFunctions(ast.NodeVisitor):
         def visit_FunctionDef(self, node):
-            output_list.append(extract_docstring(node))
+            docstring_data = extract_docstring(node)
+            if docstring_data is not None:
+                output_list.append(docstring_data)
 
-    GetFunctions().visit(src_tree)
-    output_list = [entry.insert(0, rel_path) for entry in output_list]
+    try:
+        GetFunctions().visit(src_tree)
+    except RecursionError:
+        return []
+    output_list = [[filename] + entry for entry in output_list]
+
     return output_list
 
 def main(rootdir):
-    pool = mp.pool.Pool(12)
+    pool = mp.Pool(12)
 
     progress_bar = tqdm()
     pbar_update = lambda *a: progress_bar.update()
 
-    map_result = pool.map_async(get_fns_from_file, walkdir_py(rootdir), callback=pbar_update)
+    results = []
 
-    all_fns = map_result.get()
+    for filepath in walkdir_py(rootdir):
+        results.append(pool.apply_async(get_fns_from_file, filepath, callback=pbar_update))
 
-    fn_entries = [entry for sublist in all_fns for entry in sublist]
+    results = [result.get() for result in results]
+    fn_entries = [entry for sublist in results for entry in sublist]
 
     function_data = pd.DataFrame(fn_entries, columns=[
         "filename",
-        # "ast",
-        # "tokens",
-        "fn_text",
+        "fn_body",
         "docstring"
+        # "tokens"
     ])
     function_data.to_pickle("fn_data.pickle.gz")
 
