@@ -3,7 +3,7 @@
 PROJECT_ROOT=..
 
 fairseq-train \
-    PROJECT_ROOT/data/python_preprocessed/ \
+    $PROJECT_ROOT/data/python_preprocessed/ \
     --arch transformer \
     --max-epoch 10 \
     --encoder-layers 2 \
