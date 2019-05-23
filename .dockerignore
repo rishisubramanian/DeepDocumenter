@@ -1,7 +1,8 @@
 .idea/*
 .ropeproject/*
 .vscode/*
-data/fairseq_raw/*
+data/data_raw/*
 data/repos.tgz
 data/bpe_corpus_raw/*
 data/*.gz
+tf_models/*

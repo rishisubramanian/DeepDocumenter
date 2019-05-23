@@ -4,7 +4,6 @@ from langdetect import detect, detect_langs
 from langdetect.lang_detect_exception import LangDetectException
 from io import BytesIO
 from tokenize import tokenize
-import swifter
 import dask.dataframe as dd
 from dask.diagnostics import ProgressBar
 # tqdm.pandas()

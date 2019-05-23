@@ -4,19 +4,20 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-rope = "*"
+ipython = "*"
 
 [packages]
 torch = "*"
 fairseq = "*"
 multiprocess = "*"
-swifter = "*"
 spacy = "*"
 langdetect = "*"
 astor = "*"
 subword-nmt = "*"
 pandas = "*"
 tqdm = "*"
+tensorboard = "*"
+dask = "*"
 
 [requires]
 python_version = "3.7"
