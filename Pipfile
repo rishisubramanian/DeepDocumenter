@@ -18,6 +18,7 @@ pandas = "*"
 tqdm = "*"
 tensorboard = "*"
 dask = "*"
+scikit-learn = "*"
 
 [requires]
 python_version = "3.7"

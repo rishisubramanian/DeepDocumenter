@@ -15,12 +15,12 @@ nlp = spacy.load("en_core_web_sm", disable=["parser", "tagger", "ner"])
 def tokenize_python(fn_string):
     token_buffer = BytesIO(bytes(fn_string, "utf-8"))
     tokens = list(tokenize(token_buffer.readline))
-    encoded_tokens = [token.string.encode("unicode_escape") for token in tokens]
+    encoded_tokens = [token.string.replace(" ", "%20").encode("unicode_escape") for token in tokens]
     return b"\t".join(encoded_tokens)
 
 def tokenize_docstring(docstring):
     doc = nlp(docstring)
-    return b"\t".join([token.text.encode("unicode_escape") for token in doc])
+    return b"\t".join([token.text.replace(" ", "%20").encode("unicode_escape") for token in doc])
 
 def tokenize_row(row):
     tokenized_python = tokenize_python(row.fn_body)
@@ -44,7 +44,7 @@ with open("data/python_all_docstrings.txt", "wb") as text_file:
 
 num_lines = len(tokenized_python)
 
-train_prop, val_prop = 0.8, 0.1
+train_prop, val_prop = 0.9, 0.05
 
 train_end = int(train_prop * num_lines)
 val_end = int((train_prop + val_prop) * num_lines)
