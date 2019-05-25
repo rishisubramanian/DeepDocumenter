@@ -302,3 +302,6 @@ dmypy.json
 data/*
 data_utils/*.csv
 tags
+
+models/*.json
+models/*.out
