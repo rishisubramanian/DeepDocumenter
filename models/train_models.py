@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
 
 import subprocess
-import multiprocessing
 import os
 import json
 import io
 
-num_cpu = multiprocessing.cpu_count()
-
-gpu_name = subprocess.check_output(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"]).decode()
-is_tesla = "tesla" in gpu_name.lower()
-
 training_options = [
     "--log-interval", "100",
     "--log-format", "json",
-    "--num-workers", str(num_cpu),
+    "--num-workers", "2",
     "--skip-invalid-size-inputs-valid-test",
-    "--max-epoch", "10",
+    "--max-epoch", "100",
     "--optimizer", "adam",
     "--learning-rate", "0.001",
     "--lr-scheduler", "fixed",
     "--save-interval-updates", "10000",
-    "--keep-interval-updates", "1"
+    "--keep-interval-updates", "1",
+    "--max-sentences", "32"
 ]
-
-if is_tesla:
-    training_options.append("--fp16")
 
 seq2seq_model = [
     "--arch", "lstm",
@@ -35,7 +27,7 @@ seq2seq_model = [
     "--decoder-hidden-size", "256",
     "--encoder-layers", "2",
     "--decoder-layers", "2",
-    # "--encoder-bidirectional"
+    "--encoder-bidirectional"
 ]
 
 transformer_model = [
@@ -48,6 +40,10 @@ transformer_model = [
     "--decoder-ffn-embed-dim", "512"
 ]
 
+transformer_big_model = [
+    "--arch", "transformer"
+]
+
 dynamicconv_model = [
     "--arch", "lightconv",
     "--encoder-embed-dim", "256",
@@ -57,23 +53,27 @@ dynamicconv_model = [
     "--encoder-layers", "2",
     "--decoder-layers", "2",
     "--encoder-conv-type", "dynamic",
-    "--decoder-conv-type", "dynamic"
+    "--decoder-conv-type", "dynamic",
+    "--encoder-kernel-size-list", "[3, 7]",
+    "--decoder-kernel-size-list", "[3, 7]"
 ]
 
 model_names = [
-    # "seq2seq",
-    "transformer"
-    # "dynamicconv"
+ #   "seq2seq"
+    # "transformer"
+    "transformer_big"
+     # "dynamicconv"
 ]
 
 model_params = [
-    # seq2seq_model,
-    transformer_model
-    # dynamicconv_model
+   # seq2seq_model
+    # transformer_model
+    transformer_big_model
+     # dynamicconv_model
 ]
 
 datasets = [
-    "limited_vocab",
+    #"limited_vocab",
     "bpe"
 ]
 
@@ -90,7 +90,7 @@ for model_name, model in zip(model_names, model_params):
 
 for name, command in command_list.items():
     print(f"Training: {name}")
-    with open(name + "_log.json", "wb") as log_file:
+    with open(name + "_log.json", "ab") as log_file:
         training_proc = subprocess.run(command, stdout=log_file)
         # for line in io.TextIOWrapper(training_proc.stdout, encoding="utf-8"):
         #     print(line)
